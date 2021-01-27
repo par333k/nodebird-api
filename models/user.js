@@ -54,6 +54,7 @@ module.exports = class User extends Sequelize.Model {
             as: 'user',
             through: 'Likepost',
         });
+        db.User.hasMany(db.Domain);
     }
 };
 
