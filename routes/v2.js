@@ -87,5 +87,49 @@ router.get('/posts/hashtag/:title', verifyToken, apiLimiter, async (req, res) =>
         });
     }
 });
+// 나를 팔로워 하는 리스트
+router.get('/followers', async (req, res, next) => {
+    try {
+        console.log(req.query);
+        const user = await User.findOne({where: {email: req.query.id }});
+        console.log(user);
+        if (user) {
+            // following id가 user.id인 사람들 전체 조회
+            const followers = await user.getFollowers();
+            console.log(followers);
+            res.json(followers);
+        } else  {
+            res.status(404).send('no followers');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            code: 500,
+            message: '서버 에러',
+        });
+    }
+});
 
+//내가 팔로잉 하는 리스트
+router.get('/followings', async (req, res, next) => {
+    try {
+        console.log(req.query);
+        const user = await User.findOne({where: {email: req.query.id }});
+        console.log(user);
+        if (user) {
+            // follower id가 user.id인 사람들 전체 조회
+            const followings = await user.getFollowings();
+            console.log(followings);
+            res.json(followings);
+        } else  {
+            res.status(404).send('no followers');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            code: 500,
+            message: '서버 에러',
+        });
+    }
+});
 module.exports = router;
