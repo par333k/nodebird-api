@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const url = require('url');
 
-const { verifyToken, apiLimiter } = require('./middlewares');
+const { verifyToken, apiLimiter, premiumApiLimiter } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');
 
 const router = express.Router();
@@ -28,7 +28,20 @@ router.use(async (req, res, next) => {
     credientials: true,
 }));*/
 
-router.post('/token', apiLimiter, async (req, res) => {
+// apilimit 체크 미들웨어 - 무료 / 프리미엄
+router.use(async (req, res, next) => {
+    const domain = await Domain.findOne({
+        where: { host: url.parse(req.get('origin')).host },
+    });
+
+    if (domain.type === 'premium') {
+        premiumApiLimiter(req, res, next);
+    } else {
+        apiLimiter(req, res, next);
+    }
+})
+
+router.post('/token', async (req, res) => {
     const { clientSecret } = req.body;
     try {
         const domain = await Domain.findOne({
@@ -65,7 +78,7 @@ router.post('/token', apiLimiter, async (req, res) => {
     }
 });
 
-router.get('/posts/hashtag/:title', verifyToken, apiLimiter, async (req, res) => {
+router.get('/posts/hashtag/:title', verifyToken, async (req, res) => {
     try {
         const hashtag = await Hashtag.findOne({ where: { title: req.params.title } });
         if (!hashtag) {
